@@ -62,6 +62,54 @@ def _to_fullwidth_digits(s: str) -> str:
     return s.translate(_FW_DIGITS)
 
 
+# Empirically the upstream returns *several* shapes on a successful putres:
+#   1. `{"code": "A0001", "body": {"receipt_no": "..."}}`  (test cURL fixture)
+#   2. `{"status": "OK", "code": "A4001",
+#         "res_no": "...", "rec_no": "...", "yoyakuno": "..."}`  (live 2026-05-09)
+# So a fixed `code == "A0001"` check produces a false negative for shape #2.
+# Instead: accept *either* the legacy A0001 envelope OR an explicit
+# `status == "OK"` paired with any populated reservation-id field at any
+# nesting level. The receipt we surface to the user is whichever ID field
+# the upstream chose to populate (res_no / receipt_no / yoyakuno / etc.).
+_RECEIPT_KEYS = (
+    "res_no", "receipt_no", "receiptNo", "receipt",
+    "yoyakuno", "yoyaku_no", "yoyakuNo",
+    "rec_no", "recNo",
+)
+
+
+def _is_success_response(body: dict) -> bool:
+    """Treat any 2xx-with-`status:OK` as success.
+
+    We deliberately do NOT require a receipt-id to also be present:
+    upstream success shapes have varied (the live 2026-05-09 response
+    populated ids inline, but a future shape might not), and the user
+    can always confirm + grab QR / 番号 from the website's 予約照会
+    page using their identity. We email that instruction explicitly.
+    """
+    if body.get("code") == "A0001":
+        return True
+    if str(body.get("status", "")).upper() == "OK":
+        return True
+    return False
+
+
+def _extract_receipt(body: dict) -> str | None:
+    """Find the first populated reservation-id field at top level or under
+    `body.<inner>`. Returns the value as a string, or None if none found.
+    """
+    sources: list[dict] = [body]
+    inner = body.get("body")
+    if isinstance(inner, dict):
+        sources.append(inner)
+    for source in sources:
+        for key in _RECEIPT_KEYS:
+            value = source.get(key)
+            if value:
+                return str(value)
+    return None
+
+
 def _build_putres_payload(slot: Slot, creds: BookerCredentials) -> dict:
     """Compose the JSON body putres expects.
 
@@ -170,23 +218,15 @@ class Booker:
                     failure_reason="putres returned non-JSON 2xx",
                     payload_for_review=None,
                 )
-            code = body.get("code")
-            if code != "A0001":
+            if not _is_success_response(body):
                 return BookerResult(
                     outcome=BookerOutcome.PERMANENT_FAILURE,
                     booked=None,
-                    failure_reason=f"putres code={code!r} body={body!r}",
+                    failure_reason=f"putres code={body.get('code')!r} body={body!r}",
                     payload_for_review=None,
                 )
 
-            # Success.
-            inner = body.get("body") or {}
-            receipt = (
-                inner.get("receipt_no")
-                or inner.get("receiptNo")
-                or inner.get("receipt")
-                or None
-            )
+            receipt = _extract_receipt(body)
             booked = BookedSlot(
                 date=slot.date,
                 starttime=slot.starttime,

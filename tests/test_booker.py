@@ -93,13 +93,44 @@ def test_real_send_success_returns_booked_slot():
     assert result.booked.receipt_no == "R12345"
 
 
-def test_non_A0001_is_permanent_failure():
+def test_non_A0001_without_status_OK_is_permanent_failure():
     booker = _booker_with_responses(
         httpx.Response(200, json={"code": "E9001", "body": {"message": "slot taken"}})
     )
     result = booker.try_book(_slot())
     assert result.outcome is BookerOutcome.PERMANENT_FAILURE
     assert "E9001" in (result.failure_reason or "")
+
+
+def test_status_OK_with_a4001_and_top_level_ids_is_success():
+    """Real 2026-05-09 live shape: A4001 with status:OK + flat IDs is success."""
+    booker = _booker_with_responses(
+        httpx.Response(200, json={
+            "status": "OK",
+            "code": "A4001",
+            "res_no": "1024977124262567",
+            "rec_no": "152127737313",
+            "yoyakuno": "0512270111100162",
+        })
+    )
+    result = booker.try_book(_slot())
+    assert result.outcome is BookerOutcome.SUCCESS
+    assert result.booked is not None
+    # res_no comes first in the receipt-key search order.
+    assert result.booked.receipt_no == "1024977124262567"
+
+
+def test_status_OK_without_any_id_is_still_success():
+    """status:OK alone is enough — user can confirm + grab QR via the
+    website's 予約照会 page. Email body includes that instruction.
+    """
+    booker = _booker_with_responses(
+        httpx.Response(200, json={"status": "OK", "code": "A0099"})
+    )
+    result = booker.try_book(_slot())
+    assert result.outcome is BookerOutcome.SUCCESS
+    assert result.booked is not None
+    assert result.booked.receipt_no is None
 
 
 def test_4xx_is_permanent_failure_no_retry():
