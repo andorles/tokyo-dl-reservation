@@ -1,0 +1,35 @@
+[project]
+name = "tokyo-dl-reservation"
+version = "0.1.0"
+description = "Polling + auto-booking watcher for Tokyo's 学科試験 driver-license reservation cancellations (personal, non-commercial)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "PolyForm-Noncommercial-1.0.0" }
+dependencies = [
+    "httpx>=0.27",
+]
+
+[project.urls]
+Homepage = "https://github.com/NYTC69/tokyo-dl-reservation"
+Repository = "https://github.com/NYTC69/tokyo-dl-reservation"
+Issues = "https://github.com/NYTC69/tokyo-dl-reservation/issues"
+
+[project.scripts]
+dl-poll = "dl_reservation.poll:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "respx>=0.21",  # httpx-aware HTTP mocking
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dl_reservation"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

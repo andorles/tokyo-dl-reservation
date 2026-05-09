@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# uv
+.uv-cache/
+uv.lock
+
+# Local state — runtime snapshots / config secrets
+state/
+*.local.json
+*.local.toml
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Compass private working docs — not appropriate for OSS repo
+HANDOFF.md
+BACKLOG.md
+tasks/

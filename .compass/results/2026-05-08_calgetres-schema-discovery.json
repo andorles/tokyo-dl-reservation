@@ -1,0 +1,81 @@
+{
+  "task": "calgetres schema discovery + Tokyo May-2026 baseline open-slot snapshot",
+  "task_slug": "calgetres-schema-discovery",
+  "date": "2026-05-08",
+  "session_id": "unknown",
+  "project": "tokyo-dl-reservation",
+  "context_pct_at_save": null,
+  "saved_at": "2026-05-08T09:50:00Z",
+  "results": [
+    {
+      "label": "calgetres-request-shape",
+      "description": "Full request shape for /calgetres month-availability endpoint, derived from MKAYMA001common.js#getVacancyInformation + curl probe.",
+      "value": {
+        "method": "GET",
+        "url": "https://license-test-tokyo-prd-police-pref-api.tokyo-madoguchi-yoyaku.com/calgetres",
+        "query_params": {
+          "date": "YYYYMM (string)",
+          "coursecode": "license type code as string (e.g. '11')",
+          "placecode": "3-digit center code (e.g. '270')",
+          "user": "literal 'pub'"
+        },
+        "auth": "none",
+        "csrf": "none",
+        "captcha": "none"
+      },
+      "how_computed": "Read MKAYMA001common.js line 43; confirmed via curl probe at 2026-05-08 ~08:55 JST.",
+      "valid_for": "license-test.tokyo-madoguchi-yoyaku.com police-pref-tokyo deployment as of 2026-05-08.",
+      "notes": "If the front-end deploys a new MKAYMAXXX bundle, re-derive — site routinely ships per-prefecture variants."
+    },
+    {
+      "label": "calgetres-response-shape",
+      "description": "Per-slot response shape for /calgetres.",
+      "value": {
+        "code": "string — 'A0001' = success, others see senddata.js error handling",
+        "currenttime": "string — server epoch as float seconds; client must be within 86400s",
+        "body": [
+          {
+            "date": "YYYYMMDD",
+            "starttime": "HHMM",
+            "endtime": "HHMM",
+            "capacity": "string-as-int",
+            "reservation": "string-as-int",
+            "displaytime": "ja human label",
+            "displaytime_en/zh/vi/ne/my": "i18n variants"
+          }
+        ]
+      },
+      "how_computed": "Live curl probe of /calgetres?date=202605&coursecode=11&placecode=270&user=pub.",
+      "valid_for": "2026-05-08 deployment.",
+      "notes": "calgetres returns per-slot for the whole month — do NOT need /getres for v0 polling."
+    },
+    {
+      "label": "tokyo-2026-05-baseline-open-counts",
+      "description": "Empirical open-slot counts (slots where capacity > reservation) for Tokyo's 3 試験場 × {KYOSOTSU=11, KYOSOTSU-MAINA=61} for date=202605, captured 2026-05-08 ~08:55 JST.",
+      "value": {
+        "270/11": {"total_slots": 36, "open": 6, "name": "府中試験場 / KYOSOTSU"},
+        "270/61": {"total_slots": 36, "open": 4, "name": "府中試験場 / KYOSOTSU-MAINA"},
+        "280/11": {"total_slots": 36, "open": 6, "name": "鮫洲試験場 / KYOSOTSU"},
+        "280/61": {"total_slots": 36, "open": 4, "name": "鮫洲試験場 / KYOSOTSU-MAINA"},
+        "250/11": {"total_slots": 36, "open": 6, "name": "江東試験場 / KYOSOTSU"},
+        "250/61": {"total_slots": 36, "open": 2, "name": "江東試験場 / KYOSOTSU-MAINA"}
+      },
+      "how_computed": "scripts/probe_calgetres.py (read-only) iterating PLACES × {11,61}.",
+      "valid_for": "Snapshot at 2026-05-08 ~08:55 JST. Decays continuously — re-probe before use.",
+      "notes": "Counter-intuitive finding: 11 and 61 yield different open counts (esp. 江東 6 vs 2), contradicting the front-end detailToBasicCodeMap collapsing 61→11. The two license types must occupy separate seat pools server-side; for the user (KYOSOTSU=11), poll coursecode=11 only. mynumber-merged users must poll 61 separately."
+    },
+    {
+      "label": "tos-critical-articles",
+      "description": "Articles in 利用規約 (MKAYMA00M016 in MKAYMA001MessagesJa.js, effective 2025-03-04) that constrain this project.",
+      "value": {
+        "Article-7": "System available 24/365 in principle; may be suspended without prior notice.",
+        "Article-8(4)": "Use for promotion / advertisement / solicitation / business activities is prohibited without prior MPD approval. → Hard blocker for v2 SaaS.",
+        "Article-8(8)": "Acts that unjustly interfere with system operation OR infringe other users' rights are prohibited. → Sole soft constraint on v0 polling frequency.",
+        "Article-9": "Personal info entered into the system used only for booking. → v0 enters none, compliant."
+      },
+      "how_computed": "Inspected JS string MKAYMA00M016_en in MKAYMA001MessagesJa.js (line 72), 2026-05-08.",
+      "valid_for": "MPD ToS as of 2025-03-04.",
+      "notes": "Robots.txt is 404 (catch-all SPA fallback) — Article 8(8) is the only operational constraint. ADR-2 derives 10 min/cycle from this."
+    }
+  ]
+}
