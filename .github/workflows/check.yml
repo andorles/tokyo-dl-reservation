@@ -1,0 +1,28 @@
+name: 免許試験空き枠チェック
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: uvをセットアップ
+        uses: astral-sh/setup-uv@v4
+
+      - name: 依存関係をインストール
+        run: uv sync
+
+      - name: 空き枠チェックを実行
+        env:
+          DL_RES_SMTP_HOST: smtp.gmail.com
+          DL_RES_SMTP_PORT: "465"
+          DL_RES_SMTP_USER: ${{ secrets.DL_RES_SMTP_USER }}
+          DL_RES_SMTP_PASSWORD: ${{ secrets.DL_RES_SMTP_PASSWORD }}
+          DL_RES_EMAIL_FROM: ${{ secrets.DL_RES_EMAIL_FROM }}
+          DL_RES_EMAIL_TO: ${{ secrets.DL_RES_EMAIL_TO }}
+        run: uv run dl-poll --config config.json
