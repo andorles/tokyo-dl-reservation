@@ -22,6 +22,4 @@ jobs:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
-          DL_USER_ID: ${{ secrets.DL_USER_ID }}
-          DL_PASSWORD: ${{ secrets.DL_PASSWORD }}
         run: uv run python main.py
