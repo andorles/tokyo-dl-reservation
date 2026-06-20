@@ -26,3 +26,4 @@ jobs:
           DL_RES_EMAIL_FROM: ${{ secrets.DL_RES_EMAIL_FROM }}
           DL_RES_EMAIL_TO: ${{ secrets.DL_RES_EMAIL_TO }}
         run: uv run dl-poll --config config.json
+ 
