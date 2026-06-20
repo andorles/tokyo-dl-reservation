@@ -1,0 +1,27 @@
+name: 免許試験空き枠チェック
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # 5分ごとに実行
+  workflow_dispatch:        # 手動実行も可能
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: uvをセットアップ
+        uses: astral-sh/setup-uv@v4
+
+      - name: 依存関係をインストール
+        run: uv sync
+
+      - name: 空き枠チェックを実行
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          DL_USER_ID: ${{ secrets.DL_USER_ID }}
+          DL_PASSWORD: ${{ secrets.DL_PASSWORD }}
+        run: uv run python main.py
