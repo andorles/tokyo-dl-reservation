@@ -224,24 +224,25 @@ def _maybe_send_heartbeat(
     """Fire a heartbeat email if the window has zero bookable slots and
     we have not sent one in the last HEARTBEAT_INTERVAL.
     """
-    if any(s.is_open for s in relevant):
-        return  # there is something bookable; immediate alerts cover this
+    # if any(s.is_open for s in relevant):
+    #     return
 
-    hb_path = heartbeat_state.heartbeat_path_for(state_path)
-    state = heartbeat_state.HeartbeatState.load(hb_path)
-    if not state.should_send(now):
-        return
+    # hb_path = heartbeat_state.heartbeat_path_for(state_path)
+    # state = heartbeat_state.HeartbeatState.load(hb_path)
+    # if not state.should_send(now):
+    #     return
 
-    notifier.heartbeat(
-        HeartbeatPayload(
-            deadline=request.latest_acceptable_date,
-            place_count=len(request.candidate_places),
-            course_count=len(request.candidate_courses),
-            total_slots_in_window=len(relevant),
-            last_poll_at=now.isoformat(),
-        )
-    )
-    heartbeat_state.HeartbeatState(last_at=now).save(hb_path)
+    # notifier.heartbeat(
+    #     HeartbeatPayload(
+    #         deadline=request.latest_acceptable_date,
+    #         place_count=len(request.candidate_places),
+    #         course_count=len(request.candidate_courses),
+    #         total_slots_in_window=len(relevant),
+    #         last_poll_at=now.isoformat(),
+    #     )
+    # )
+    # heartbeat_state.HeartbeatState(last_at=now).save(hb_path)
+    pass
 
 
 def main(argv: list[str] | None = None) -> int:
