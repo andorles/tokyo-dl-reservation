@@ -2,8 +2,8 @@ name: 免許試験空き枠チェック
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 5分ごとに実行
-  workflow_dispatch:        # 手動実行も可能
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
 
 jobs:
   check:
@@ -19,7 +19,10 @@ jobs:
 
       - name: 空き枠チェックを実行
         env:
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        run: uv run python main.py
+          DL_RES_SMTP_HOST: smtp.gmail.com
+          DL_RES_SMTP_PORT: "465"
+          DL_RES_SMTP_USER: ${{ secrets.DL_RES_SMTP_USER }}
+          DL_RES_SMTP_PASSWORD: ${{ secrets.DL_RES_SMTP_PASSWORD }}
+          DL_RES_EMAIL_FROM: ${{ secrets.DL_RES_EMAIL_FROM }}
+          DL_RES_EMAIL_TO: ${{ secrets.DL_RES_EMAIL_TO }}
+        run: uv run dl-poll
